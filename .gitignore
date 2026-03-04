@@ -1,0 +1,9 @@
+# Variáveis de ambiente reais - NUNCA commitar!
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
