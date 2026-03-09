@@ -51,6 +51,23 @@ services:
       EXECUTIONS_MODE: regular
       N8N_METRICS: false
 
+      # Desbloquear acesso a variáveis de ambiente nos nodes
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+
+      # Telegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+
+      # Ollama (acessível internamente pelo nome do container)
+      OLLAMA_HOST: ollama
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-mistral}
+
+      # Whisper
+      WHISPER_HOST: ${WHISPER_HOST:-whisper}
+
+      # Google Sheets
+      GOOGLE_SHEET_ID: ${GOOGLE_SHEET_ID}
+
     volumes:
       - n8n-data:/home/node/.n8n
     depends_on:
@@ -63,6 +80,24 @@ services:
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: n8n-whisper
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    environment:
+      - ASR_MODEL=small
+      - ASR_ENGINE=openai_whisper
+    volumes:
+      - whisper-data:/root/.cache/whisper
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/docs || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   ollama:
     image: ollama/ollama:latest
@@ -78,6 +113,7 @@ volumes:
   n8n-postgres-data:
   n8n-data:
   ollama-data:
+  whisper-data:
 
 networks:
   traefik-public:
